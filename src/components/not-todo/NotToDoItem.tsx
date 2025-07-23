@@ -19,21 +19,18 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { PrioritySelector } from './PrioritySelector';
-import { Edit2, Trash2, Check, X, CheckCircle } from 'lucide-react';
+import { Edit2, Trash2, Check, X } from 'lucide-react';
 
 interface NotToDoItemProps {
   item: NotToDoItemType;
   onDelete: (id: string) => void;
-  onUpdate: (id: string, updates: Partial<NotToDoItemType>) => void;
-  onMarkAvoided: (id: string) => void;
+  onUpdate: (
+    id: string,
+    updates: Partial<Pick<NotToDoItemType, 'text' | 'priority'>>,
+  ) => void;
 }
 
-export function NotToDoItem({
-  item,
-  onDelete,
-  onUpdate,
-  onMarkAvoided,
-}: NotToDoItemProps) {
+export function NotToDoItem({ item, onDelete, onUpdate }: NotToDoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.text);
   const [editPriority, setEditPriority] = useState(item.priority);
@@ -75,11 +72,8 @@ export function NotToDoItem({
     setShowDeleteDialog(false);
   };
 
-  const handleMarkAvoided = () => {
-    onMarkAvoided(item.id);
-  };
-
-  const formatDate = (date: Date) => {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -88,13 +82,7 @@ export function NotToDoItem({
   };
 
   return (
-    <Card
-      className={`transition-all duration-300 hover:shadow-lg hover:shadow-black/10 border-border/60 ${
-        item.avoidedToday
-          ? 'bg-green-500/10 border-green-500/30 shadow-green-500/10'
-          : 'hover:border-[#e00014]/20'
-      }`}
-    >
+    <Card className="transition-all duration-300 hover:shadow-lg hover:shadow-black/10 border-border/60 hover:border-[#e00014]/20">
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           {/* Priority Badge */}
@@ -141,23 +129,11 @@ export function NotToDoItem({
               </div>
             ) : (
               <div className="space-y-2">
-                <p
-                  className={`text-sm leading-relaxed transition-all duration-200 ${
-                    item.avoidedToday
-                      ? 'line-through text-muted-foreground/70'
-                      : 'text-foreground'
-                  }`}
-                >
+                <p className="text-sm leading-relaxed text-foreground">
                   {item.text}
                 </p>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Added {formatDate(item.createdAt)}</span>
-                  {item.avoidedToday && (
-                    <span className="text-green-400 font-medium flex items-center gap-1">
-                      <CheckCircle className="h-3 w-3" />
-                      Avoided today!
-                    </span>
-                  )}
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <span>Added {formatDate(item.created_at)}</span>
                 </div>
               </div>
             )}
@@ -166,16 +142,6 @@ export function NotToDoItem({
           {/* Actions */}
           {!isEditing && (
             <div className="flex gap-1 shrink-0">
-              {!item.avoidedToday && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleMarkAvoided}
-                  className="text-green-500 hover:text-green-400 hover:bg-green-500/10 border-green-500/30 hover:border-green-500/50 transition-all duration-200"
-                >
-                  <CheckCircle className="h-3 w-3" />
-                </Button>
-              )}
               <Button
                 size="sm"
                 variant="outline"

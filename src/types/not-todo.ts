@@ -2,15 +2,19 @@ export interface NotToDoItem {
   id: string;
   text: string;
   priority: 1 | 2 | 3 | 4 | 5;
-  createdAt: Date;
-  avoidedToday: boolean;
-  lastAvoidedDate?: Date;
+  created_at: string; // Now comes from database as ISO string
+  user_id: string; // Added for database relation
 }
 
 export interface NotToDoState {
   items: NotToDoItem[];
   sortBy: 'priority' | 'date' | 'alphabetical';
   sortDirection: 'asc' | 'desc';
+  currentUser: {
+    id: string;
+    email: string;
+  } | null;
+  isLoading: boolean;
 }
 
 export type SortOption = 'priority' | 'date' | 'alphabetical';

@@ -10,6 +10,7 @@ import {
 import { NotToDoForm } from './NotToDoForm';
 import { NotToDoList } from './NotToDoList';
 import { SortControls } from './SortControls';
+import { UserOnboarding } from './UserOnboarding';
 import {
   Card,
   CardContent,
@@ -18,103 +19,157 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { UserService } from '@/lib/user-service';
+import { TaskService } from '@/lib/task-service';
+import { User, Task } from '@/lib/supabase';
 
 export function NotToDoApp() {
   const [state, setState] = useState<NotToDoState>({
     items: [],
     sortBy: 'priority',
     sortDirection: 'desc',
+    currentUser: null,
+    isLoading: true,
   });
-  const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load from localStorage on mount and mark as hydrated
+  // Initialize user and load tasks
   useEffect(() => {
-    const stored = localStorage.getItem('not-todo-items');
-    if (stored) {
-      try {
-        const parsedState = JSON.parse(stored);
-        // Convert date strings back to Date objects
-        parsedState.items = parsedState.items.map((item: NotToDoItem) => ({
-          ...item,
-          createdAt: new Date(item.createdAt),
-          lastAvoidedDate: item.lastAvoidedDate
-            ? new Date(item.lastAvoidedDate)
-            : undefined,
-        }));
-        setState(parsedState);
-      } catch (error) {
-        console.error(
-          'Failed to load not-to-do items from localStorage:',
-          error,
-        );
+    initializeApp();
+  }, []);
+
+  const initializeApp = async () => {
+    try {
+      setState((prev) => ({ ...prev, isLoading: true }));
+
+      // Check if there's a saved user email
+      const savedEmail = UserService.getCurrentUserEmail();
+
+      if (savedEmail) {
+        // Get or create user and load their tasks
+        await handleUserCreated(savedEmail);
+      } else {
+        // No user, show onboarding
+        setState((prev) => ({ ...prev, isLoading: false }));
       }
+    } catch (error) {
+      console.error('Error initializing app:', error);
+      setState((prev) => ({ ...prev, isLoading: false }));
     }
-    setIsHydrated(true);
-  }, []);
+  };
 
-  // Save to localStorage whenever state changes (only after hydration)
-  useEffect(() => {
-    if (isHydrated) {
-      localStorage.setItem('not-todo-items', JSON.stringify(state));
+  const handleUserCreated = async (email: string) => {
+    try {
+      setState((prev) => ({ ...prev, isLoading: true }));
+
+      // Get or create user
+      const user = await UserService.getOrCreateUser(email);
+      UserService.setCurrentUserEmail(email);
+
+      // Load user's tasks
+      const tasks = await TaskService.getTasksForUser(user.id);
+
+      // Convert database tasks to app format
+      const items: NotToDoItem[] = tasks.map((task: Task) => ({
+        id: task.id,
+        text: task.text,
+        priority: task.priority as 1 | 2 | 3 | 4 | 5,
+        created_at: task.created_at,
+        user_id: task.user_id,
+      }));
+
+      setState((prev) => ({
+        ...prev,
+        currentUser: { id: user.id, email: user.email },
+        items,
+        isLoading: false,
+      }));
+    } catch (error) {
+      console.error('Error creating/loading user:', error);
+      setState((prev) => ({ ...prev, isLoading: false }));
     }
-  }, [state, isHydrated]);
-
-  // Daily reset logic - reset avoidedToday if last avoided date is not today
-  useEffect(() => {
-    const today = new Date().toDateString();
-    setState((prevState) => ({
-      ...prevState,
-      items: prevState.items.map((item) => ({
-        ...item,
-        avoidedToday: item.lastAvoidedDate?.toDateString() === today,
-      })),
-    }));
-  }, []);
-
-  const addItem = (text: string, priority: 1 | 2 | 3 | 4 | 5) => {
-    const newItem: NotToDoItem = {
-      id: crypto.randomUUID(),
-      text,
-      priority,
-      createdAt: new Date(),
-      avoidedToday: false,
-    };
-    setState((prevState) => ({
-      ...prevState,
-      items: [...prevState.items, newItem],
-    }));
   };
 
-  const deleteItem = (id: string) => {
-    setState((prevState) => ({
-      ...prevState,
-      items: prevState.items.filter((item) => item.id !== id),
-    }));
+  const addItem = async (text: string, priority: 1 | 2 | 3 | 4 | 5) => {
+    if (!state.currentUser) return;
+
+    try {
+      const task = await TaskService.addTask(
+        state.currentUser.id,
+        text,
+        priority,
+      );
+
+      const newItem: NotToDoItem = {
+        id: task.id,
+        text: task.text,
+        priority: task.priority as 1 | 2 | 3 | 4 | 5,
+        created_at: task.created_at,
+        user_id: task.user_id,
+      };
+
+      setState((prev) => ({
+        ...prev,
+        items: [newItem, ...prev.items], // Add to beginning since we sort by created_at desc
+      }));
+    } catch (error) {
+      console.error('Error adding task:', error);
+    }
   };
 
-  const updateItem = (id: string, updates: Partial<NotToDoItem>) => {
-    setState((prevState) => ({
-      ...prevState,
-      items: prevState.items.map((item) =>
-        item.id === id ? { ...item, ...updates } : item,
-      ),
-    }));
+  const deleteItem = async (id: string) => {
+    try {
+      await TaskService.deleteTask(id);
+      setState((prev) => ({
+        ...prev,
+        items: prev.items.filter((item) => item.id !== id),
+      }));
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
   };
 
-  const markAvoidedToday = (id: string) => {
-    const now = new Date();
-    updateItem(id, {
-      avoidedToday: true,
-      lastAvoidedDate: now,
-    });
+  const updateItem = async (
+    id: string,
+    updates: Partial<Pick<NotToDoItem, 'text' | 'priority'>>,
+  ) => {
+    try {
+      const updatedTask = await TaskService.updateTask(id, updates);
+
+      setState((prev) => ({
+        ...prev,
+        items: prev.items.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                text: updatedTask.text,
+                priority: updatedTask.priority as 1 | 2 | 3 | 4 | 5,
+              }
+            : item,
+        ),
+      }));
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
   };
 
   const updateSort = (sortBy: SortOption, sortDirection: SortDirection) => {
-    setState((prevState) => ({
-      ...prevState,
+    setState((prev) => ({
+      ...prev,
       sortBy,
       sortDirection,
     }));
+  };
+
+  const handleSignOut = () => {
+    UserService.clearCurrentUser();
+    setState({
+      items: [],
+      sortBy: 'priority',
+      sortDirection: 'desc',
+      currentUser: null,
+      isLoading: false,
+    });
   };
 
   // Sort items based on current sort settings
@@ -126,7 +181,8 @@ export function NotToDoApp() {
         comparison = a.priority - b.priority;
         break;
       case 'date':
-        comparison = a.createdAt.getTime() - b.createdAt.getTime();
+        comparison =
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         break;
       case 'alphabetical':
         comparison = a.text.localeCompare(b.text);
@@ -136,8 +192,8 @@ export function NotToDoApp() {
     return state.sortDirection === 'asc' ? comparison : -comparison;
   });
 
-  // Prevent hydration mismatch by not rendering content until after client-side hydration
-  if (!isHydrated) {
+  // Show loading state
+  if (state.isLoading) {
     return (
       <div className="w-full max-w-4xl mx-auto p-6 space-y-6">
         <Card className="border-border/50 shadow-lg shadow-black/10">
@@ -146,8 +202,7 @@ export function NotToDoApp() {
               Not-To-Do List
             </CardTitle>
             <CardDescription className="text-lg text-muted-foreground mt-2">
-              Track things you want to avoid doing, sorted by how badly you
-              don&apos;t want to do them
+              Loading your personal not-to-do list...
             </CardDescription>
             <div className="w-24 h-1 bg-gradient-to-r from-transparent via-[#e00014] to-transparent mx-auto mt-4 rounded-full"></div>
           </CardHeader>
@@ -163,17 +218,34 @@ export function NotToDoApp() {
     );
   }
 
+  // Show onboarding if no user
+  if (!state.currentUser) {
+    return (
+      <UserOnboarding
+        onUserCreated={handleUserCreated}
+        isLoading={state.isLoading}
+      />
+    );
+  }
+
+  // Main app with user
   return (
     <div className="w-full max-w-4xl mx-auto p-6 space-y-6">
       <Card className="border-border/50 shadow-lg shadow-black/10">
         <CardHeader className="text-center pb-8">
-          <CardTitle className="text-4xl font-bold bg-gradient-to-r from-foreground via-[#e00014] to-foreground bg-clip-text text-transparent">
-            Not-To-Do List
-          </CardTitle>
-          <CardDescription className="text-lg text-muted-foreground mt-2">
-            Track things you want to avoid doing, sorted by how badly you
-            don&apos;t want to do them
-          </CardDescription>
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1">
+              <CardTitle className="text-4xl font-bold bg-gradient-to-r from-foreground via-[#e00014] to-foreground bg-clip-text text-transparent">
+                Not-To-Do List
+              </CardTitle>
+              <CardDescription className="text-lg text-muted-foreground mt-2">
+                Welcome back, {state.currentUser.email}!
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={handleSignOut}>
+              Sign Out
+            </Button>
+          </div>
           <div className="w-24 h-1 bg-gradient-to-r from-transparent via-[#e00014] to-transparent mx-auto mt-4 rounded-full"></div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -192,7 +264,7 @@ export function NotToDoApp() {
             items={sortedItems}
             onDeleteItem={deleteItem}
             onUpdateItem={updateItem}
-            onMarkAvoided={markAvoidedToday}
+            onMarkAvoided={() => {}} // We removed the avoided functionality
           />
         </CardContent>
       </Card>
