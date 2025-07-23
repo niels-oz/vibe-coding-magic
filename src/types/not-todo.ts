@@ -21,14 +21,14 @@ export const PRIORITY_LABELS: Record<Priority, string> = {
   1: 'Meh',
   2: 'Rather not',
   3: "Don't want to",
-  4: "Really don't want to", 
-  5: 'Absolutely must avoid'
+  4: "Really don't want to",
+  5: 'Absolutely must avoid',
 };
 
 export const PRIORITY_COLORS: Record<Priority, string> = {
-  1: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
-  2: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
-  3: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200',
-  4: 'bg-orange-100 text-orange-800 hover:bg-orange-200',
-  5: 'bg-red-100 text-red-800 hover:bg-red-200'
-}; 
+  1: 'bg-slate-500/20 text-slate-300 border-slate-500/30 hover:bg-slate-500/30',
+  2: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30 hover:bg-yellow-500/30',
+  3: 'bg-orange-500/20 text-orange-300 border-orange-500/30 hover:bg-orange-500/30',
+  4: 'bg-red-500/30 text-red-300 border-red-500/40 hover:bg-red-500/40',
+  5: 'bg-gradient-to-r from-red-600/40 to-[#e00014]/50 text-red-200 border-[#e00014]/60 hover:from-red-600/50 hover:to-[#e00014]/60 shadow-[#e00014]/20 shadow-md',
+};

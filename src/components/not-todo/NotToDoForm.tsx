@@ -14,13 +14,17 @@ interface NotToDoFormProps {
 export function NotToDoForm({ onAddItem }: NotToDoFormProps) {
   const [text, setText] = useState('');
   const [priority, setPriority] = useState<Priority>(3);
+  // TypeScript Error: unused variable
+  const unusedVariable = 'This variable is never used';
 
+  // Linting Error: missing return type annotation
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (text.trim()) {
       onAddItem(text.trim(), priority);
       setText('');
-      setPriority(3);
+      // TypeScript Error: wrong type assignment
+      setPriority('invalid' as any);
     }
   };
 
@@ -32,9 +36,11 @@ export function NotToDoForm({ onAddItem }: NotToDoFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="not-todo-text">What do you want to avoid doing?</Label>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-3">
+        <Label htmlFor="not-todo-text" className="text-base font-medium">
+          What do you want to avoid doing?
+        </Label>
         <Input
           id="not-todo-text"
           type="text"
@@ -42,26 +48,28 @@ export function NotToDoForm({ onAddItem }: NotToDoFormProps) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full"
+          className="w-full text-base py-3 border-border/60 focus:border-[#e00014]/50 focus:ring-[#e00014]/20"
         />
       </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="priority-selector">How badly do you want to avoid this?</Label>
+
+      <div className="space-y-3">
+        <Label htmlFor="priority-selector" className="text-base font-medium">
+          How badly do you want to avoid this?
+        </Label>
         <PrioritySelector
           value={priority}
           onChange={setPriority}
           id="priority-selector"
         />
       </div>
-      
-      <Button 
-        type="submit" 
+
+      <Button
+        type="submit"
         disabled={!text.trim()}
-        className="w-full"
+        className="w-full bg-[#e00014] hover:bg-[#b8000f] text-white py-3 text-base font-medium transition-all duration-200 shadow-lg shadow-[#e00014]/20 hover:shadow-[#e00014]/30 disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
       >
         Add to Not-To-Do List
       </Button>
     </form>
   );
-} 
+}

@@ -1,18 +1,29 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { NotToDoItem, NotToDoState, SortOption, SortDirection } from '@/types/not-todo';
+import {
+  NotToDoItem,
+  NotToDoState,
+  SortOption,
+  SortDirection,
+} from '@/types/not-todo';
 import { NotToDoForm } from './NotToDoForm';
 import { NotToDoList } from './NotToDoList';
 import { SortControls } from './SortControls';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
 export function NotToDoApp() {
   const [state, setState] = useState<NotToDoState>({
     items: [],
     sortBy: 'priority',
-    sortDirection: 'desc'
+    sortDirection: 'desc',
   });
 
   // Load from localStorage on mount
@@ -25,11 +36,16 @@ export function NotToDoApp() {
         parsedState.items = parsedState.items.map((item: NotToDoItem) => ({
           ...item,
           createdAt: new Date(item.createdAt),
-          lastAvoidedDate: item.lastAvoidedDate ? new Date(item.lastAvoidedDate) : undefined
+          lastAvoidedDate: item.lastAvoidedDate
+            ? new Date(item.lastAvoidedDate)
+            : undefined,
         }));
         setState(parsedState);
       } catch (error) {
-        console.error('Failed to load not-to-do items from localStorage:', error);
+        console.error(
+          'Failed to load not-to-do items from localStorage:',
+          error,
+        );
       }
     }
   }, []);
@@ -42,12 +58,12 @@ export function NotToDoApp() {
   // Daily reset logic - reset avoidedToday if last avoided date is not today
   useEffect(() => {
     const today = new Date().toDateString();
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
-      items: prevState.items.map(item => ({
+      items: prevState.items.map((item) => ({
         ...item,
-        avoidedToday: item.lastAvoidedDate?.toDateString() === today
-      }))
+        avoidedToday: item.lastAvoidedDate?.toDateString() === today,
+      })),
     }));
   }, []);
 
@@ -57,50 +73,50 @@ export function NotToDoApp() {
       text,
       priority,
       createdAt: new Date(),
-      avoidedToday: false
+      avoidedToday: false,
     };
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
-      items: [...prevState.items, newItem]
+      items: [...prevState.items, newItem],
     }));
   };
 
   const deleteItem = (id: string) => {
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
-      items: prevState.items.filter(item => item.id !== id)
+      items: prevState.items.filter((item) => item.id !== id),
     }));
   };
 
   const updateItem = (id: string, updates: Partial<NotToDoItem>) => {
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
-      items: prevState.items.map(item =>
-        item.id === id ? { ...item, ...updates } : item
-      )
+      items: prevState.items.map((item) =>
+        item.id === id ? { ...item, ...updates } : item,
+      ),
     }));
   };
 
   const markAvoidedToday = (id: string) => {
     const now = new Date();
-    updateItem(id, { 
-      avoidedToday: true, 
-      lastAvoidedDate: now 
+    updateItem(id, {
+      avoidedToday: true,
+      lastAvoidedDate: now,
     });
   };
 
   const updateSort = (sortBy: SortOption, sortDirection: SortDirection) => {
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
       sortBy,
-      sortDirection
+      sortDirection,
     }));
   };
 
   // Sort items based on current sort settings
   const sortedItems = [...state.items].sort((a, b) => {
     let comparison = 0;
-    
+
     switch (state.sortBy) {
       case 'priority':
         comparison = a.priority - b.priority;
@@ -112,33 +128,35 @@ export function NotToDoApp() {
         comparison = a.text.localeCompare(b.text);
         break;
     }
-    
+
     return state.sortDirection === 'asc' ? comparison : -comparison;
   });
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6 space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold text-center">
+      <Card className="border-border/50 shadow-lg shadow-black/10">
+        <CardHeader className="text-center pb-8">
+          <CardTitle className="text-4xl font-bold bg-gradient-to-r from-foreground via-[#e00014] to-foreground bg-clip-text text-transparent">
             Not-To-Do List
           </CardTitle>
-          <CardDescription className="text-center">
-            Track things you want to avoid doing, sorted by how badly you don&apos;t want to do them
+          <CardDescription className="text-lg text-muted-foreground mt-2">
+            Track things you want to avoid doing, sorted by how badly you
+            don&apos;t want to do them
           </CardDescription>
+          <div className="w-24 h-1 bg-gradient-to-r from-transparent via-[#e00014] to-transparent mx-auto mt-4 rounded-full"></div>
         </CardHeader>
         <CardContent className="space-y-6">
           <NotToDoForm onAddItem={addItem} />
-          
-          <Separator />
-          
+
+          <Separator className="bg-gradient-to-r from-transparent via-border to-transparent" />
+
           <SortControls
             sortBy={state.sortBy}
             sortDirection={state.sortDirection}
             onSortChange={updateSort}
             itemCount={state.items.length}
           />
-          
+
           <NotToDoList
             items={sortedItems}
             onDeleteItem={deleteItem}
@@ -149,4 +167,4 @@ export function NotToDoApp() {
       </Card>
     </div>
   );
-} 
+}
