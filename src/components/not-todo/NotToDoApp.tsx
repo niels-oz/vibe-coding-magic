@@ -32,17 +32,25 @@ export function NotToDoApp() {
     currentUser: null,
     isLoading: true,
   });
+  const [mounted, setMounted] = useState(false);
 
-  // Initialize user and load tasks
+  // Set mounted state after component mounts
   useEffect(() => {
-    initializeApp();
+    setMounted(true);
   }, []);
+
+  // Initialize user and load tasks after component mounts
+  useEffect(() => {
+    if (mounted) {
+      initializeApp();
+    }
+  }, [mounted]);
 
   const initializeApp = async () => {
     try {
       setState((prev) => ({ ...prev, isLoading: true }));
 
-      // Check if there's a saved user email
+      // Check if there's a saved user email (safe to call now that component is mounted)
       const savedEmail = UserService.getCurrentUserEmail();
 
       if (savedEmail) {
@@ -191,6 +199,25 @@ export function NotToDoApp() {
 
     return state.sortDirection === 'asc' ? comparison : -comparison;
   });
+
+  // Prevent hydration mismatch during SSR
+  if (!mounted) {
+    return (
+      <div className="w-full max-w-4xl mx-auto p-6 space-y-6">
+        <Card className="border-border/50 shadow-lg shadow-black/10">
+          <CardHeader className="text-center pb-8">
+            <CardTitle className="text-4xl font-bold bg-gradient-to-r from-foreground via-[#e00014] to-foreground bg-clip-text text-transparent">
+              Not-To-Do List
+            </CardTitle>
+            <CardDescription className="text-lg text-muted-foreground mt-2">
+              Loading...
+            </CardDescription>
+            <div className="w-24 h-1 bg-gradient-to-r from-transparent via-[#e00014] to-transparent mx-auto mt-4 rounded-full"></div>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   // Show loading state
   if (state.isLoading) {
