@@ -14,17 +14,13 @@ interface NotToDoFormProps {
 export function NotToDoForm({ onAddItem }: NotToDoFormProps) {
   const [text, setText] = useState('');
   const [priority, setPriority] = useState<Priority>(3);
-  // TypeScript Error: unused variable
-  const unusedVariable = 'This variable is never used';
 
-  // Linting Error: missing return type annotation
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     if (text.trim()) {
       onAddItem(text.trim(), priority);
       setText('');
-      // TypeScript Error: wrong type assignment
-      setPriority('invalid' as any);
+      setPriority(3); // Reset to default priority
     }
   };
 

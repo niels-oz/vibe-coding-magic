@@ -20,15 +20,12 @@ import {
 } from '@/components/ui/dialog';
 import { PrioritySelector } from './PrioritySelector';
 import { Edit2, Trash2, Check, X, CheckCircle } from 'lucide-react';
-// Missing import error - Calendar is used but not imported
 
 interface NotToDoItemProps {
   item: NotToDoItemType;
   onDelete: (id: string) => void;
   onUpdate: (id: string, updates: Partial<NotToDoItemType>) => void;
   onMarkAvoided: (id: string) => void;
-  // TypeScript Error: adding non-existent prop
-  invalidProp?: number;
 }
 
 export function NotToDoItem({
@@ -89,9 +86,6 @@ export function NotToDoItem({
       year: 'numeric',
     });
   };
-
-  // ESLint Error: console.log in production code
-  console.log('Debug info:', item);
 
   return (
     <Card

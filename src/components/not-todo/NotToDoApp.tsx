@@ -25,8 +25,9 @@ export function NotToDoApp() {
     sortBy: 'priority',
     sortDirection: 'desc',
   });
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount and mark as hydrated
   useEffect(() => {
     const stored = localStorage.getItem('not-todo-items');
     if (stored) {
@@ -48,12 +49,15 @@ export function NotToDoApp() {
         );
       }
     }
+    setIsHydrated(true);
   }, []);
 
-  // Save to localStorage whenever state changes
+  // Save to localStorage whenever state changes (only after hydration)
   useEffect(() => {
-    localStorage.setItem('not-todo-items', JSON.stringify(state));
-  }, [state]);
+    if (isHydrated) {
+      localStorage.setItem('not-todo-items', JSON.stringify(state));
+    }
+  }, [state, isHydrated]);
 
   // Daily reset logic - reset avoidedToday if last avoided date is not today
   useEffect(() => {
@@ -131,6 +135,33 @@ export function NotToDoApp() {
 
     return state.sortDirection === 'asc' ? comparison : -comparison;
   });
+
+  // Prevent hydration mismatch by not rendering content until after client-side hydration
+  if (!isHydrated) {
+    return (
+      <div className="w-full max-w-4xl mx-auto p-6 space-y-6">
+        <Card className="border-border/50 shadow-lg shadow-black/10">
+          <CardHeader className="text-center pb-8">
+            <CardTitle className="text-4xl font-bold bg-gradient-to-r from-foreground via-[#e00014] to-foreground bg-clip-text text-transparent">
+              Not-To-Do List
+            </CardTitle>
+            <CardDescription className="text-lg text-muted-foreground mt-2">
+              Track things you want to avoid doing, sorted by how badly you
+              don&apos;t want to do them
+            </CardDescription>
+            <div className="w-24 h-1 bg-gradient-to-r from-transparent via-[#e00014] to-transparent mx-auto mt-4 rounded-full"></div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="animate-pulse space-y-6">
+              <div className="h-32 bg-muted/30 rounded-lg"></div>
+              <div className="h-8 bg-muted/20 rounded"></div>
+              <div className="h-12 bg-muted/20 rounded"></div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6 space-y-6">
