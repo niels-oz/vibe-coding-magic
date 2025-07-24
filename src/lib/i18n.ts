@@ -114,10 +114,10 @@ export const translations: Record<Language, Translations> = {
     loading: 'Lädt...',
     loadingPersonalList: 'Ding persönliche Lasterzettel lädt...',
     
-    welcomeBack: 'Willekumme zeröck',
+    welcomeBack: 'Willkumme zeröck',
     signOut: 'Un fott',
-    welcomeToApp: 'Willekumme beim Lasterzettel!',
-    enterEmailToStart: 'Jiv ding E-Mail en öm met dingem persönliche Lasterzettel ze beginne',
+    welcomeToApp: 'Ding Lasterzettel!',
+    enterEmailToStart: 'Wat is denn ding E-Mail? Dat ich dä och finge kann.',
     email: 'E-Mail',
     getStarted: 'Loß jonn',
     settingUp: 'Maache klar...',
