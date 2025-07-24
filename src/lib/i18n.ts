@@ -155,7 +155,7 @@ export const translations: Record<Language, Translations> = {
       other: '{count} Sache',
     },
     
-    added: 'derbei jetan',
+    added: 'Derbei jetan',
   },
 };
 
