@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   NotToDoItem as NotToDoItemType,
   PRIORITY_COLORS,
+  PRIORITY_EMOJIS,
 } from '@/types/not-todo';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -89,7 +90,7 @@ export function NotToDoItem({ item, onDelete, onUpdate }: NotToDoItemProps) {
           <Badge
             className={`${PRIORITY_COLORS[item.priority]} shrink-0 mt-1 font-medium px-2 py-1 text-xs border transition-all duration-200`}
           >
-            {item.priority}
+            {PRIORITY_EMOJIS[item.priority]}
           </Badge>
 
           {/* Content */}

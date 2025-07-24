@@ -29,6 +29,14 @@ export const PRIORITY_LABELS: Record<Priority, string> = {
   5: 'Absolutely must avoid',
 };
 
+export const PRIORITY_EMOJIS: Record<Priority, string> = {
+  1: '😐',
+  2: '😬',
+  3: '😤',
+  4: '😡',
+  5: '🤬',
+};
+
 export const PRIORITY_COLORS: Record<Priority, string> = {
   1: 'bg-slate-500/20 text-slate-300 border-slate-500/30 hover:bg-slate-500/30',
   2: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30 hover:bg-yellow-500/30',

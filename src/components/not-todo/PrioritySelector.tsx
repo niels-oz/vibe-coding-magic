@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PRIORITY_LABELS, PRIORITY_COLORS, Priority } from '@/types/not-todo';
+import { PRIORITY_LABELS, PRIORITY_COLORS, PRIORITY_EMOJIS, Priority } from '@/types/not-todo';
 import { Badge } from '@/components/ui/badge';
 
 interface PrioritySelectorProps {
@@ -35,7 +35,7 @@ export function PrioritySelector({
             <Badge
               className={`${PRIORITY_COLORS[value]} text-xs px-2 py-1 border transition-all duration-200`}
             >
-              {value}
+              {PRIORITY_EMOJIS[value]}
             </Badge>
             <span className="text-sm">{PRIORITY_LABELS[value]}</span>
           </div>
@@ -54,7 +54,7 @@ export function PrioritySelector({
                 <Badge
                   className={`${PRIORITY_COLORS[priorityNum]} text-xs px-2 py-1 border transition-all duration-200`}
                 >
-                  {priority}
+                  {PRIORITY_EMOJIS[priorityNum]}
                 </Badge>
                 <span className="text-sm font-medium">{label}</span>
               </div>
