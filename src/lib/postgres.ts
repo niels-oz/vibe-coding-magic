@@ -26,7 +26,10 @@ pool.on('error', (err: Error) => {
   process.exit(-1);
 });
 
-// Database types (same as in supabase.ts)
+/**
+ * Database types for Postgres.
+ * (Legacy: previously matched supabase.ts, now self-contained)
+ */
 export interface User {
   id: string;
   email: string;
