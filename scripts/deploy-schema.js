@@ -1,4 +1,4 @@
-const { createClient } = require('@supabase/supabase-js');
+const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 
@@ -6,22 +6,24 @@ const path = require('path');
 require('dotenv').config({ path: '.env.local' });
 
 async function deploySchema() {
-  console.log('🚀 Starting schema deployment to remote Supabase...\n');
+  console.log('🚀 Starting schema deployment to Neon Postgres...\n');
 
   // Validate environment variables
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const databaseUrl = process.env.DATABASE_URL;
 
-  if (!supabaseUrl || !serviceRoleKey) {
-    console.error('❌ Missing required environment variables:');
-    console.error('   - NEXT_PUBLIC_SUPABASE_URL');
-    console.error('   - SUPABASE_SERVICE_ROLE_KEY');
+  if (!databaseUrl) {
+    console.error('❌ Missing required environment variable: DATABASE_URL');
     console.error('\nPlease check your .env.local file');
     process.exit(1);
   }
 
-  // Create Supabase client with service role key (for admin operations)
-  const supabase = createClient(supabaseUrl, serviceRoleKey);
+  // Create a connection pool
+  const pool = new Pool({
+    connectionString: databaseUrl,
+    ssl: {
+      rejectUnauthorized: false // Required for Neon Postgres
+    }
+  });
 
   try {
     // Read the migration file
@@ -38,72 +40,72 @@ async function deploySchema() {
     const statements = migrationSQL
       .split(';')
       .map((stmt) => stmt.trim())
-      .filter((stmt) => stmt.length > 0 && !stmt.startsWith('--'));
+      .filter((stmt) => stmt.length > 0 && !stmt.startsWith('--'))
+      // Filter out RLS policies and grants since we're not using them with Neon
+      .filter((stmt) => 
+        !stmt.toLowerCase().includes('row level security') && 
+        !stmt.toLowerCase().includes('policy') &&
+        !stmt.toLowerCase().includes('grant')
+      );
 
     console.log(`🔄 Executing ${statements.length} SQL statements...`);
 
-    // Execute each statement individually
-    for (let i = 0; i < statements.length; i++) {
-      const statement = statements[i] + ';';
+    // Get a client from the pool
+    const client = await pool.connect();
 
-      try {
-        console.log(
-          `   ${i + 1}/${statements.length}: ${statement.substring(0, 50)}...`,
-        );
+    try {
+      // Begin transaction
+      await client.query('BEGIN');
 
-        // Use the REST API to execute SQL
-        const response = await fetch(`${supabaseUrl}/rest/v1/rpc/exec`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${serviceRoleKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ sql: statement }),
-        });
+      // Execute each statement individually
+      for (let i = 0; i < statements.length; i++) {
+        const statement = statements[i] + ';';
 
-        if (!response.ok) {
-          // If direct SQL execution doesn't work, try using Supabase client methods for table operations
-          if (statement.toLowerCase().includes('create table')) {
-            console.log(`   ⚠️  Using alternative method for table creation`);
-            // This will be handled by the migration process
-          } else {
-            const errorText = await response.text();
-            console.log(
-              `   ⚠️  Statement skipped (may already exist): ${errorText.substring(0, 100)}...`,
-            );
-          }
-        } else {
+        try {
+          console.log(
+            `   ${i + 1}/${statements.length}: ${statement.substring(0, 50)}...`,
+          );
+
+          await client.query(statement);
           console.log(`   ✅ Success`);
+        } catch (err) {
+          // If the error is about the relation already existing, that's okay
+          if (err.message.includes('already exists')) {
+            console.log(`   ⚠️  Object already exists, skipping`);
+          } else {
+            console.log(`   ⚠️  Statement error: ${err.message}`);
+            // Don't throw, try to continue with other statements
+          }
         }
-      } catch (err) {
-        console.log(
-          `   ⚠️  Statement skipped: ${err.message.substring(0, 100)}...`,
-        );
       }
-    }
 
-    console.log('\n✅ Schema deployment completed!');
-    console.log('🔒 Row Level Security policies should be enabled');
-    console.log('👥 User and task tables should be created');
+      // Commit transaction
+      await client.query('COMMIT');
 
-    // Test the connection
-    console.log('\n🧪 Testing database connection...');
-    const { data: testData, error: testError } = await supabase
-      .from('users')
-      .select('count')
-      .limit(1);
+      console.log('\n✅ Schema deployment completed!');
+      console.log('👥 User and task tables should be created');
 
-    if (testError) {
-      console.error('❌ Connection test failed:', testError.message);
-      console.log(
-        "\nℹ️  This might be normal if RLS is enabled. Let's try the full test...",
-      );
-    } else {
+      // Test the connection
+      console.log('\n🧪 Testing database connection...');
+      const result = await client.query('SELECT COUNT(*) FROM users');
+
       console.log('✅ Database connection successful!');
+      console.log(`👥 Users count: ${result.rows[0].count}`);
+
+    } catch (err) {
+      // Rollback transaction on error
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      // Release the client back to the pool
+      client.release();
     }
   } catch (err) {
     console.error('❌ Deployment error:', err.message);
     process.exit(1);
+  } finally {
+    // Close the pool
+    await pool.end();
   }
 }
 

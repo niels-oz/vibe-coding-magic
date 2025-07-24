@@ -20,9 +20,19 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { UserService } from '@/lib/user-service';
-import { TaskService } from '@/lib/task-service';
-import { User, Task } from '@/lib/supabase';
+// Define types locally for client-side use
+interface User {
+  id: string;
+  email: string;
+}
+
+interface Task {
+  id: string;
+  user_id: string;
+  text: string;
+  priority: number;
+  created_at: string;
+}
 
 export function NotToDoApp() {
   const [state, setState] = useState<NotToDoState>({
@@ -50,8 +60,8 @@ export function NotToDoApp() {
     try {
       setState((prev) => ({ ...prev, isLoading: true }));
 
-      // Check if there's a saved user email (safe to call now that component is mounted)
-      const savedEmail = UserService.getCurrentUserEmail();
+      // Check if there's a saved user email
+      const savedEmail = localStorage.getItem('currentUserEmail');
 
       if (savedEmail) {
         // Get or create user and load their tasks
@@ -70,12 +80,20 @@ export function NotToDoApp() {
     try {
       setState((prev) => ({ ...prev, isLoading: true }));
 
-      // Get or create user
-      const user = await UserService.getOrCreateUser(email);
-      UserService.setCurrentUserEmail(email);
+      // Get or create user via API
+      const userResponse = await fetch(`/api/users?email=${encodeURIComponent(email)}`);
+      if (!userResponse.ok) {
+        throw new Error(`Failed to get or create user: ${userResponse.statusText}`);
+      }
+      const user: User = await userResponse.json();
+      localStorage.setItem('currentUserEmail', email);
 
-      // Load user's tasks
-      const tasks = await TaskService.getTasksForUser(user.id);
+      // Load user's tasks via API
+      const tasksResponse = await fetch(`/api/tasks?userId=${encodeURIComponent(user.id)}`);
+      if (!tasksResponse.ok) {
+        throw new Error(`Failed to load tasks: ${tasksResponse.statusText}`);
+      }
+      const tasks: Task[] = await tasksResponse.json();
 
       // Convert database tasks to app format
       const items: NotToDoItem[] = tasks.map((task: Task) => ({
@@ -102,11 +120,15 @@ export function NotToDoApp() {
     if (!state.currentUser) return;
 
     try {
-      const task = await TaskService.addTask(
-        state.currentUser.id,
-        text,
-        priority,
-      );
+      const addTaskResponse = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: state.currentUser.id, text, priority }),
+      });
+      if (!addTaskResponse.ok) {
+        throw new Error(`Failed to add task: ${addTaskResponse.statusText}`);
+      }
+      const task: Task = await addTaskResponse.json();
 
       const newItem: NotToDoItem = {
         id: task.id,
@@ -127,7 +149,12 @@ export function NotToDoApp() {
 
   const deleteItem = async (id: string) => {
     try {
-      await TaskService.deleteTask(id);
+      const deleteTaskResponse = await fetch(`/api/tasks?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      if (!deleteTaskResponse.ok) {
+        throw new Error(`Failed to delete task: ${deleteTaskResponse.statusText}`);
+      }
       setState((prev) => ({
         ...prev,
         items: prev.items.filter((item) => item.id !== id),
@@ -142,7 +169,15 @@ export function NotToDoApp() {
     updates: Partial<Pick<NotToDoItem, 'text' | 'priority'>>,
   ) => {
     try {
-      const updatedTask = await TaskService.updateTask(id, updates);
+      const updateTaskResponse = await fetch('/api/tasks', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, updates }),
+      });
+      if (!updateTaskResponse.ok) {
+        throw new Error(`Failed to update task: ${updateTaskResponse.statusText}`);
+      }
+      const updatedTask: Task = await updateTaskResponse.json();
 
       setState((prev) => ({
         ...prev,
@@ -170,7 +205,7 @@ export function NotToDoApp() {
   };
 
   const handleSignOut = () => {
-    UserService.clearCurrentUser();
+    localStorage.removeItem('currentUserEmail');
     setState({
       items: [],
       sortBy: 'priority',

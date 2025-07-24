@@ -1,74 +1,80 @@
-const { createClient } = require('@supabase/supabase-js');
+const { Pool } = require('pg');
 require('dotenv').config({ path: '.env.local' });
 
 async function testUserCreation() {
-  console.log('🧪 Testing user creation with fixed RLS policies...\n');
+  console.log('🧪 Testing user creation with Neon Postgres...\n');
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const databaseUrl = process.env.DATABASE_URL;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('❌ Missing environment variables');
+  if (!databaseUrl) {
+    console.error('❌ Missing DATABASE_URL environment variable');
     return;
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  // Create a connection pool
+  const pool = new Pool({
+    connectionString: databaseUrl,
+    ssl: {
+      rejectUnauthorized: false // Required for Neon Postgres
+    }
+  });
 
   try {
-    // Test creating a user (this was failing before due to RLS)
+    // Test creating a user
     const testEmail = `test-${Date.now()}@example.com`;
     console.log(`📝 Attempting to create user: ${testEmail}`);
 
-    const { data: newUser, error: createError } = await supabase
-      .from('users')
-      .insert([{ email: testEmail }])
-      .select()
-      .single();
+    const createResult = await pool.query(
+      'INSERT INTO users (email) VALUES ($1) RETURNING *',
+      [testEmail]
+    );
 
-    if (createError) {
-      console.error('❌ User creation failed:', createError.message);
+    if (createResult.rows.length === 0) {
+      console.error('❌ User creation failed');
       return;
     }
 
+    const newUser = createResult.rows[0];
     console.log('✅ User created successfully!', {
       id: newUser.id,
       email: newUser.email,
     });
 
     // Test reading the user back
-    const { data: fetchedUser, error: fetchError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', testEmail)
-      .single();
+    const fetchResult = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [testEmail]
+    );
 
-    if (fetchError) {
-      console.error('❌ User fetch failed:', fetchError.message);
+    if (fetchResult.rows.length === 0) {
+      console.error('❌ User fetch failed');
       return;
     }
 
+    const fetchedUser = fetchResult.rows[0];
     console.log('✅ User fetched successfully!', {
       id: fetchedUser.id,
       email: fetchedUser.email,
     });
 
     // Clean up test user
-    const { error: deleteError } = await supabase
-      .from('users')
-      .delete()
-      .eq('id', newUser.id);
+    const deleteResult = await pool.query(
+      'DELETE FROM users WHERE id = $1',
+      [newUser.id]
+    );
 
-    if (deleteError) {
-      console.log('⚠️  Could not clean up test user:', deleteError.message);
+    if (deleteResult.rowCount === 0) {
+      console.log('⚠️  Could not clean up test user');
     } else {
       console.log('🧹 Test user cleaned up');
     }
 
-    console.log(
-      '\n🎉 All user operations work correctly! The RLS policies are fixed.',
-    );
+    console.log('\n🎉 All user operations work correctly with Neon Postgres!');
   } catch (err) {
     console.error('❌ Test failed:', err.message);
+  } finally {
+    // Close the pool
+    await pool.end();
   }
 }
 
