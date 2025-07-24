@@ -144,7 +144,7 @@ export const translations: Record<Language, Translations> = {
     
     sortBy: 'Sortiere noh:',
     priority: 'Wie üvvel',
-    dateAdded: 'Wann dobeijedun',
+    dateAdded: 'Wann derbei jetan',
     alphabetical: 'Nohm ABC',
     noItems: 'Noch nix do',
     noItemsYet: 'Et sin noch kei Sache op ding Lasterzettel',
@@ -155,7 +155,7 @@ export const translations: Record<Language, Translations> = {
       other: '{count} Sache',
     },
     
-    added: 'Dobeijedun',
+    added: 'derbei jetan',
   },
 };
 
