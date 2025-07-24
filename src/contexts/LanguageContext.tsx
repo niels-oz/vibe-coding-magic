@@ -12,7 +12,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<Language>('en');
+  const [language, setLanguageState] = useState<Language>('cgn');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -36,7 +36,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // Prevent hydration mismatch
   if (!mounted) {
     return (
-      <LanguageContext.Provider value={{ language: 'en', setLanguage: () => {}, t: getTranslation('en') }}>
+      <LanguageContext.Provider value={{ language: 'cgn', setLanguage: () => {}, t: getTranslation('cgn') }}>
         {children}
       </LanguageContext.Provider>
     );
