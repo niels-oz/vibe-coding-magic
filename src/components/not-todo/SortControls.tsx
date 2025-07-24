@@ -1,5 +1,7 @@
 'use client';
 
+import { useLanguage } from '@/contexts/LanguageContext';
+import { formatItemCount } from '@/lib/i18n';
 import {
   Select,
   SelectContent,
@@ -24,6 +26,7 @@ export function SortControls({
   onSortChange,
   itemCount,
 }: SortControlsProps) {
+  const { t } = useLanguage();
   const handleSortByChange = (newSortBy: SortOption) => {
     onSortChange(newSortBy, sortDirection);
   };
@@ -37,19 +40,13 @@ export function SortControls({
   return (
     <div className="flex items-center justify-between gap-4 py-3 px-1">
       <div className="text-sm font-medium text-muted-foreground">
-        {itemCount === 0 ? (
-          <span className="text-muted-foreground/60">No items yet</span>
-        ) : (
-          <span>
-            {itemCount} item{itemCount === 1 ? '' : 's'}
-          </span>
-        )}
+        <span>{formatItemCount(itemCount, t)}</span>
       </div>
 
       {itemCount > 0 && (
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-muted-foreground">
-            Sort by:
+            {t.sortBy}
           </span>
 
           <Select value={sortBy} onValueChange={handleSortByChange}>
@@ -61,19 +58,19 @@ export function SortControls({
                 value="priority"
                 className="focus:bg-[#e00014]/10 focus:text-[#e00014]"
               >
-                Priority
+                {t.priority}
               </SelectItem>
               <SelectItem
                 value="date"
                 className="focus:bg-[#e00014]/10 focus:text-[#e00014]"
               >
-                Date Added
+                {t.dateAdded}
               </SelectItem>
               <SelectItem
                 value="alphabetical"
                 className="focus:bg-[#e00014]/10 focus:text-[#e00014]"
               >
-                Alphabetical
+                {t.alphabetical}
               </SelectItem>
             </SelectContent>
           </Select>

@@ -6,6 +6,7 @@ import {
   PRIORITY_COLORS,
   PRIORITY_EMOJIS,
 } from '@/types/not-todo';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ interface NotToDoItemProps {
 }
 
 export function NotToDoItem({ item, onDelete, onUpdate }: NotToDoItemProps) {
+  const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.text);
   const [editPriority, setEditPriority] = useState(item.priority);
@@ -116,7 +118,7 @@ export function NotToDoItem({ item, onDelete, onUpdate }: NotToDoItemProps) {
                     className="bg-[#e00014] hover:bg-[#b8000f] text-white"
                   >
                     <Check className="h-3 w-3 mr-1" />
-                    Save
+                    {t.save}
                   </Button>
                   <Button
                     size="sm"
@@ -124,7 +126,7 @@ export function NotToDoItem({ item, onDelete, onUpdate }: NotToDoItemProps) {
                     onClick={handleCancelEdit}
                   >
                     <X className="h-3 w-3 mr-1" />
-                    Cancel
+                    {t.cancel}
                   </Button>
                 </div>
               </div>
@@ -134,7 +136,7 @@ export function NotToDoItem({ item, onDelete, onUpdate }: NotToDoItemProps) {
                   {item.text}
                 </p>
                 <div className="flex items-center text-xs text-muted-foreground">
-                  <span>Added {formatDate(item.created_at)}</span>
+                  <span>{t.added} {formatDate(item.created_at)}</span>
                 </div>
               </div>
             )}
@@ -166,10 +168,9 @@ export function NotToDoItem({ item, onDelete, onUpdate }: NotToDoItemProps) {
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Delete Not-To-Do Item</DialogTitle>
+                    <DialogTitle>{t.deleteConfirmTitle}</DialogTitle>
                     <DialogDescription>
-                      Are you sure you want to delete &quot;{item.text}&quot;?
-                      This action cannot be undone.
+                      {t.deleteConfirmMessage}
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
@@ -177,14 +178,14 @@ export function NotToDoItem({ item, onDelete, onUpdate }: NotToDoItemProps) {
                       variant="outline"
                       onClick={() => setShowDeleteDialog(false)}
                     >
-                      Cancel
+                      {t.cancel}
                     </Button>
                     <Button
                       variant="destructive"
                       onClick={handleDelete}
                       className="bg-[#e00014] hover:bg-[#b8000f]"
                     >
-                      Delete
+                      {t.delete}
                     </Button>
                   </DialogFooter>
                 </DialogContent>

@@ -21,6 +21,8 @@ export type SortOption = 'priority' | 'date' | 'alphabetical';
 export type SortDirection = 'asc' | 'desc';
 export type Priority = 1 | 2 | 3 | 4 | 5;
 
+// Priority labels are now handled by the translation system
+// This is kept for backward compatibility but should use translations instead
 export const PRIORITY_LABELS: Record<Priority, string> = {
   1: 'Meh',
   2: 'Rather not',

@@ -20,6 +20,8 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { LanguageSelector } from '@/components/LanguageSelector';
 // Define types locally for client-side use
 interface User {
   id: string;
@@ -35,6 +37,7 @@ interface Task {
 }
 
 export function NotToDoApp() {
+  const { t } = useLanguage();
   const [state, setState] = useState<NotToDoState>({
     items: [],
     sortBy: 'priority',
@@ -241,11 +244,14 @@ export function NotToDoApp() {
       <div className="w-full max-w-4xl mx-auto p-6 space-y-6">
         <Card className="border-border/50 shadow-lg shadow-black/10">
           <CardHeader className="text-center pb-8">
+            <div className="flex justify-end mb-4">
+              <LanguageSelector />
+            </div>
             <CardTitle className="text-4xl font-bold bg-gradient-to-r from-foreground via-[#e00014] to-foreground bg-clip-text text-transparent">
-              Not-To-Do List
+              {t.appTitle}
             </CardTitle>
             <CardDescription className="text-lg text-muted-foreground mt-2">
-              Loading...
+              {t.loading}
             </CardDescription>
             <div className="w-24 h-1 bg-gradient-to-r from-transparent via-[#e00014] to-transparent mx-auto mt-4 rounded-full"></div>
           </CardHeader>
@@ -260,11 +266,14 @@ export function NotToDoApp() {
       <div className="w-full max-w-4xl mx-auto p-6 space-y-6">
         <Card className="border-border/50 shadow-lg shadow-black/10">
           <CardHeader className="text-center pb-8">
+            <div className="flex justify-end mb-4">
+              <LanguageSelector />
+            </div>
             <CardTitle className="text-4xl font-bold bg-gradient-to-r from-foreground via-[#e00014] to-foreground bg-clip-text text-transparent">
-              Not-To-Do List
+              {t.appTitle}
             </CardTitle>
             <CardDescription className="text-lg text-muted-foreground mt-2">
-              Loading your personal not-to-do list...
+              {t.loadingPersonalList}
             </CardDescription>
             <div className="w-24 h-1 bg-gradient-to-r from-transparent via-[#e00014] to-transparent mx-auto mt-4 rounded-full"></div>
           </CardHeader>
@@ -298,15 +307,18 @@ export function NotToDoApp() {
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">
               <CardTitle className="text-4xl font-bold bg-gradient-to-r from-foreground via-[#e00014] to-foreground bg-clip-text text-transparent">
-                Not-To-Do List
+                {t.appTitle}
               </CardTitle>
               <CardDescription className="text-lg text-muted-foreground mt-2">
-                Welcome back, {state.currentUser.email}!
+                {t.welcomeBack}, {state.currentUser.email}!
               </CardDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={handleSignOut}>
-              Sign Out
-            </Button>
+            <div className="flex items-center gap-3">
+              <LanguageSelector />
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
+                {t.signOut}
+              </Button>
+            </div>
           </div>
           <div className="w-24 h-1 bg-gradient-to-r from-transparent via-[#e00014] to-transparent mx-auto mt-4 rounded-full"></div>
         </CardHeader>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +13,7 @@ interface NotToDoFormProps {
 }
 
 export function NotToDoForm({ onAddItem }: NotToDoFormProps) {
+  const { t } = useLanguage();
   const [text, setText] = useState('');
   const [priority, setPriority] = useState<Priority>(3);
 
@@ -35,12 +37,12 @@ export function NotToDoForm({ onAddItem }: NotToDoFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-3">
         <Label htmlFor="not-todo-text" className="text-base font-medium">
-          What do you want to avoid doing?
+          {t.whatToAvoid}
         </Label>
         <Input
           id="not-todo-text"
           type="text"
-          placeholder="e.g., Scrolling social media for hours..."
+          placeholder={t.placeholder}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -50,7 +52,7 @@ export function NotToDoForm({ onAddItem }: NotToDoFormProps) {
 
       <div className="space-y-3">
         <Label htmlFor="priority-selector" className="text-base font-medium">
-          How badly do you want to avoid this?
+          {t.howBadlyAvoid}
         </Label>
         <PrioritySelector
           value={priority}
@@ -64,7 +66,7 @@ export function NotToDoForm({ onAddItem }: NotToDoFormProps) {
         disabled={!text.trim()}
         className="w-full bg-[#e00014] hover:bg-[#b8000f] text-white py-3 text-base font-medium transition-all duration-200 shadow-lg shadow-[#e00014]/20 hover:shadow-[#e00014]/30 disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
       >
-        Add to Not-To-Do List
+        {t.addToList}
       </Button>
     </form>
   );
