@@ -112,7 +112,7 @@ export const translations: Record<Language, Translations> = {
     appTitle: 'Lasterzettel',
     appDescription: 'Halt fast wat de nit dun wills, sorteet noh wie üvvel et es',
     loading: 'Lädt...',
-    loadingPersonalList: 'Ding persönliche Lasterzettel lädt...',
+    loadingPersonalList: 'Ding Lasterzettel lädt...',
     
     welcomeBack: 'Willkumme zeröck',
     signOut: 'Un fott',
